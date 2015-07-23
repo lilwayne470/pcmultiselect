@@ -12,19 +12,19 @@
 if (!defined('_PS_VERSION_'))
 	exit;
 
-class Skeleton extends Module
+class pcmultiselect extends Module
 {
 	public function __construct()
 	{
-		$this->name = 'skeleton';
+		$this->name = 'pcmultiselect';
 		$this->tab = 'front_office_features';
 		$this->version = '1.0';
-		$this->author = 'Jevin O. Sewaruth';
+		$this->author = 'Purecobalt';
 
 		parent::__construct();
 
-		$this->displayName = $this->l('Skeleton Module');
-		$this->description = $this->l('This is just an empty module. You should modify it to make your own.');
+		$this->displayName = $this->l('Advanced multi selection Module');
+		$this->description = $this->l('This is a advanced ui selector');
 
 		$this->confirmUninstall = $this->l('Are you sure you want to uninstall this module?');
 
@@ -36,10 +36,9 @@ class Skeleton extends Module
 	public function install()
 	{
 		if (!parent::install() ||
-			!$this->registerHook('displayHeader') ||
-			!$this->registerHook('displayLeftColumn') ||
-			!$this->registerHook('displayRightColumn') ||
-			!$this->registerHook('displayFooter') ||
+			!$this->registerHook('actionAdminControllerSetMedia') ||
+			!$this->registerHook('actionProductUpdate') ||
+			!$this->registerHook('displayAdminProductsExtra') ||
 			!$this->_createContent())
 			return false;
 		return true;
@@ -142,6 +141,23 @@ class Skeleton extends Module
 			return false;
 		return true;
 
+	}
+
+	public function alterTable($method)
+	{
+	    switch ($method) {
+	        case 'add':
+	            $sql = 'ALTER TABLE ' . _DB_PREFIX_ . 'product_lang ADD `wine_attribute` TEXT NOT NULL';
+	            break;
+	         
+	        case 'remove':
+	            $sql = 'ALTER TABLE ' . _DB_PREFIX_ . 'product_lang DROP COLUMN `wine_attribute`';
+	            break;
+	    }
+	     
+	    if(!Db::getInstance()->Execute($sql))
+	        return false;
+	    return true;
 	}
 }
 
