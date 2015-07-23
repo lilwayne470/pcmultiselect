@@ -2,10 +2,7 @@
 
 /*
  * ----------------------------------------------------------------------------
- * "THE BEER-WARE LICENSE" (Revision 42):
- * <jevin9@gmail.com> wrote this module. As long as you retain this notice you
- * can do whatever you want with this stuff. If we meet some day, and you think
- * this stuff is worth it, you can buy me a beer in return. Jevin O. Sewaruth.
+ * This is a Bambara Module
  * ----------------------------------------------------------------------------
  */
 
@@ -20,6 +17,7 @@ class pcmultiselect extends Module
 		$this->tab = 'front_office_features';
 		$this->version = '1.0';
 		$this->author = 'Purecobalt';
+		$this->bootstrap = true;
 
 		parent::__construct();
 
@@ -27,8 +25,6 @@ class pcmultiselect extends Module
 		$this->description = $this->l('This is a advanced ui selector');
 
 		$this->confirmUninstall = $this->l('Are you sure you want to uninstall this module?');
-
-		$this->_checkContent();
 
 		$this->context->smarty->assign('module_name', $this->name);
 	}
@@ -39,7 +35,8 @@ class pcmultiselect extends Module
 			!$this->registerHook('actionAdminControllerSetMedia') ||
 			!$this->registerHook('actionProductUpdate') ||
 			!$this->registerHook('displayAdminProductsExtra') ||
-			!$this->_createContent())
+			!$this->alterTable('add') ||
+			!Configuration::updateValue('MULTISELECT_NAME', ''))
 			return false;
 		return true;
 	}
@@ -47,118 +44,117 @@ class pcmultiselect extends Module
 	public function uninstall()
 	{
 		if (!parent::uninstall() ||
-			!$this->_deleteContent())
+			!$this->alterTable('remove') ||
+			!Configuration::deleteByName('MULTISELECT_NAME'))
 			return false;
 		return true;
 	}
-	
-	public function hookDisplayHeader()
-	{
-		$this->context->controller->addCSS($this->_path.'css/style.css', 'all');
-		$this->context->controller->addJS($this->_path.'js/script.js', 'all');
-	}
-	
-	public function hookDisplayLeftColumn()
-	{
-		$this->context->smarty->assign(array(
-			'placement' => 'left',
-		));
 
-		return $this->display(__FILE__, 'left.tpl');
-	}
-	
-	public function hookDisplayRightColumn()
-	{
-		$this->context->smarty->assign(array(
-			'placement' => 'right',
-		));
-
-		return $this->display(__FILE__, 'right.tpl');
-	}
-	
-	public function hookDisplayFooter()
-	{
-		$this->context->smarty->assign(array(
-			'module_link' => $this->context->link->getModuleLink('skeleton', 'details'),
-		));
-
-		return $this->display(__FILE__, 'footer.tpl');
-	}
 
 	public function getContent()
 	{
-		$message = '';
-
-		if (Tools::isSubmit('submit_'.$this->name))
-			$message = $this->_saveContent();
-
-		$this->_displayContent($message);
-
-		return $this->display(__FILE__, 'settings.tpl');
+		$output = null;
+	 
+		if (Tools::isSubmit('submit'.$this->name))
+		{
+			$my_module_name = strval(Tools::getValue('MULTISELECT_NAME'));
+			if (!$my_module_name
+			  || empty($my_module_name)
+			  || !Validate::isGenericName($my_module_name))
+				$output .= $this->displayError($this->l('Invalid Configuration value'));
+			else
+			{
+				Configuration::updateValue('MULTISELECT_NAME', $my_module_name);
+				$output .= $this->displayConfirmation($this->l('Settings updated'));
+			}
+		}
+		return $output.$this->renderForm();
 	}
 
-	private function _saveContent()
+	private function _postProcess()
 	{
-		$message = '';
-
-		if (Configuration::updateValue('MOD_SKELETON_NAME', Tools::getValue('MOD_SKELETON_NAME')) &&
-			Configuration::updateValue('MOD_SKELETON_COLOR', Tools::getValue('MOD_SKELETON_COLOR')))
-			$message = $this->displayConfirmation($this->l('Your settings have been saved'));
-		else
-			$message = $this->displayError($this->l('There was an error while saving your settings'));
-
-		return $message;
+		
 	}
 
-	private function _displayContent($message)
+	public function hookDisplayAdminProductsExtra($params)
 	{
-		$this->context->smarty->assign(array(
-			'message' => $message,
-			'MOD_SKELETON_NAME' => Configuration::get('MOD_SKELETON_NAME'),
-			'MOD_SKELETON_COLOR' => Configuration::get('MOD_SKELETON_COLOR'),
-		));
+		if (Validate::isLoadedObject($product = new Product((int)Tools::getValue('id_product'))))
+		{
+			return $this->display(__FILE__, 'product-tab.tpl');
+		}
 	}
 
-	private function _checkContent()
-	{
-		if (!Configuration::get('MOD_SKELETON_NAME') &&
-			!Configuration::get('MOD_SKELETON_COLOR'))
-			$this->warning = $this->l('You need to configure this module.');
-	}
 
-	private function _createContent()
+	private function alterTable($method)
 	{
-		if (!Configuration::updateValue('MOD_SKELETON_NAME', '') ||
-			!Configuration::updateValue('MOD_SKELETON_COLOR', ''))
+		switch ($method) {
+			case 'add':
+				$sql = 'ALTER TABLE ' . _DB_PREFIX_ . 'product_lang ADD `wine_attribute` TEXT NOT NULL';
+				break;
+			 
+			case 'remove':
+				$sql = 'ALTER TABLE ' . _DB_PREFIX_ . 'product_lang DROP COLUMN `wine_attribute`';
+				break;
+		}
+		 
+		if(!Db::getInstance()->Execute($sql))
 			return false;
 		return true;
 	}
 
-	private function _deleteContent()
+	public function renderForm()
 	{
-		if (!Configuration::deleteByName('MOD_SKELETON_NAME') ||
-			!Configuration::deleteByName('MOD_SKELETON_COLOR'))
-			return false;
-		return true;
+		$fields_form = array(
+			'form' => array(
+				'legend' => array(
+					'title' => $this->l('Settings'),
+					'icon' => 'icon-cogs'
+				),
+				'input' => array(
+					array(
+							'type' => 'text',
+							'label' => $this->l('Food Pairing'),
+							'name' => 'pms_food_pairing',
+							'class' => 'fixed-width-md',
+							'required' => true
+						),
+					)
+				),
+			'submit' => array(
+				'title' => $this->l('Save'),
+				'class' => 'btn btn-default pull-right')
+		);
 
+		$helper = new HelperForm();
+		$helper->module = $this;
+	    $helper->name_controller = $this->name;
+	    $helper->token = Tools::getAdminTokenLite('AdminModules');
+	    $helper->currentIndex = AdminController::$currentIndex.'&configure='.$this->name;
+
+	    $helper->default_form_language = $default_lang;
+    	$helper->allow_employee_form_lang = $default_lang;
+
+    	$helper->title = $this->displayName;
+	    $helper->show_toolbar = true;        // false -> remove toolbar
+	    $helper->toolbar_scroll = true;      // yes - > Toolbar is always visible on the top of the screen.
+	    $helper->submit_action = 'submit'.$this->name;
+	    $helper->toolbar_btn = array(
+	        'save' =>
+	        array(
+	            'desc' => $this->l('Save'),
+	            'href' => AdminController::$currentIndex.'&configure='.$this->name.'&save'.$this->name.
+	            '&token='.Tools::getAdminTokenLite('AdminModules'),
+	        ),
+	        'back' => array(
+	            'href' => AdminController::$currentIndex.'&token='.Tools::getAdminTokenLite('AdminModules'),
+	            'desc' => $this->l('Back to list')
+	        )
+	    );
+		
+		$helper->fields_value['MULTISELECT_NAME'] = Configuration::get('MULTISELECT_NAME');
+		return $helper->generateForm(array($fields_form));
 	}
 
-	public function alterTable($method)
-	{
-	    switch ($method) {
-	        case 'add':
-	            $sql = 'ALTER TABLE ' . _DB_PREFIX_ . 'product_lang ADD `wine_attribute` TEXT NOT NULL';
-	            break;
-	         
-	        case 'remove':
-	            $sql = 'ALTER TABLE ' . _DB_PREFIX_ . 'product_lang DROP COLUMN `wine_attribute`';
-	            break;
-	    }
-	     
-	    if(!Db::getInstance()->Execute($sql))
-	        return false;
-	    return true;
-	}
 }
 
 ?>

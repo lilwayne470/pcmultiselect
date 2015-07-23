@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-	<name>skeleton</name>
-	<displayName><![CDATA[skeleton]]></displayName>
+	<name>pcmultiselect</name>
+	<displayName><![CDATA[Advanced multi selection Module]]></displayName>
 	<version><![CDATA[1.0]]></version>
-	<description><![CDATA[This is just an empty module named skeleton.]]></description>
-	<author><![CDATA[Jevin O. Sewaruth]]></author>
+	<description><![CDATA[This is a advanced ui selector]]></description>
+	<author><![CDATA[Purecobalt]]></author>
 	<tab><![CDATA[front_office_features]]></tab>
-	<confirmUninstall>This is just an empty module. You should modify it to make your own.</confirmUninstall>
+	<confirmUninstall><![CDATA[Are you sure you want to uninstall this module?]]></confirmUninstall>
 	<is_configurable>1</is_configurable>
-	<need_instance>0</need_instance>
+	<need_instance>1</need_instance>
 	<limited_countries></limited_countries>
 </module>
