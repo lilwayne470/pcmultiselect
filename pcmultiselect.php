@@ -73,7 +73,7 @@ class pcmultiselect extends Module
 
 	private function _postProcess()
 	{
-		
+
 	}
 
 	public function hookDisplayAdminProductsExtra($params)
@@ -118,11 +118,11 @@ class pcmultiselect extends Module
 							'class' => 'fixed-width-md',
 							'required' => true
 						),
-					)
-				),
-			'submit' => array(
+					),
+				'submit' => array(
 				'title' => $this->l('Save'),
 				'class' => 'btn btn-default pull-right')
+				),
 		);
 
 		$helper = new HelperForm();
@@ -139,12 +139,6 @@ class pcmultiselect extends Module
 	    $helper->toolbar_scroll = true;      // yes - > Toolbar is always visible on the top of the screen.
 	    $helper->submit_action = 'submit'.$this->name;
 	    $helper->toolbar_btn = array(
-	        'save' =>
-	        array(
-	            'desc' => $this->l('Save'),
-	            'href' => AdminController::$currentIndex.'&configure='.$this->name.'&save'.$this->name.
-	            '&token='.Tools::getAdminTokenLite('AdminModules'),
-	        ),
 	        'back' => array(
 	            'href' => AdminController::$currentIndex.'&token='.Tools::getAdminTokenLite('AdminModules'),
 	            'desc' => $this->l('Back to list')
